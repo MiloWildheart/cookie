@@ -16881,21 +16881,39 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
     return {
-      highestScore: null
+      highestScore: null,
+      ingredients: [],
+      teaspoonsUsed: {} // Track teaspoons used for each ingredient
     };
   },
+
   methods: {
     calculateHighestScore: function calculateHighestScore() {
       var _this = this;
       axios__WEBPACK_IMPORTED_MODULE_0__["default"].get('/calculate-highest-score').then(function (response) {
         _this.highestScore = response.data.highestScore;
+        _this.teaspoonsUsed = response.data.teaspoonsUsed; // Update teaspoonsUsed
       })["catch"](function (error) {
         console.error('Error fetching highest score:', error);
-        // Log the detailed error information
         console.log('Error details:', error.response.data);
         console.log('Status code:', error.response.status);
       });
+    },
+    updateTeaspoonsUsed: function updateTeaspoonsUsed(teaspoonsUsed) {
+      // Update the teaspoonsUsed object with the data received from the server
+      this.teaspoonsUsed = teaspoonsUsed;
+    },
+    fetchIngredients: function fetchIngredients() {
+      var _this2 = this;
+      axios__WEBPACK_IMPORTED_MODULE_0__["default"].get('/get-ingredients').then(function (response) {
+        _this2.ingredients = response.data.ingredients;
+      })["catch"](function (error) {
+        console.error('Error fetching ingredients:', error);
+      });
     }
+  },
+  mounted: function mounted() {
+    this.fetchIngredients();
   }
 });
 
@@ -16915,14 +16933,40 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
 
 var _hoisted_1 = {
+  "class": "container mx-auto mt-8 text-center"
+};
+var _hoisted_2 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h1", {
+  "class": "text-3xl font-bold mb-4"
+}, "Cookie Recipe Calculator", -1 /* HOISTED */);
+var _hoisted_3 = {
+  "class": "mb-4"
+};
+var _hoisted_4 = {
   key: 0
 };
+var _hoisted_5 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h2", {
+  "class": "text-xl font-semibold mb-2"
+}, "Available Ingredients:", -1 /* HOISTED */);
+var _hoisted_6 = {
+  "class": "list-disc pl-4"
+};
+var _hoisted_7 = {
+  key: 1,
+  "class": "mt-4"
+};
+var _hoisted_8 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("strong", null, "Highest Score:", -1 /* HOISTED */);
+
 function render(_ctx, _cache, $props, $setup, $data, $options) {
-  return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("button", {
+  return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_1, [_hoisted_2, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("button", {
     onClick: _cache[0] || (_cache[0] = function () {
       return $options.calculateHighestScore && $options.calculateHighestScore.apply($options, arguments);
-    })
-  }, "Calculate Highest Score"), $data.highestScore !== null ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_1, "Highest Score: " + (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($data.highestScore), 1 /* TEXT */)) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)]);
+    }),
+    "class": "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+  }, " Calculate Highest Score ")]), $data.ingredients.length ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_4, [_hoisted_5, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("ul", _hoisted_6, [((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_0__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.renderList)($data.ingredients, function (ingredient) {
+    return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("li", {
+      key: ingredient.id
+    }, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(ingredient.name) + " - Capacity: " + (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(ingredient.capacity) + ", Durability: " + (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(ingredient.durability) + ", Flavor: " + (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(ingredient.flavor) + ", Texture: " + (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(ingredient.texture) + ", Calories: " + (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(ingredient.calories) + ", Teaspoons: " + (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($data.teaspoonsUsed[ingredient.id] || 0) + ", ", 1 /* TEXT */);
+  }), 128 /* KEYED_FRAGMENT */))])])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), $data.highestScore !== null ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_7, [_hoisted_8, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" " + (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($data.highestScore), 1 /* TEXT */)])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)]);
 }
 
 /***/ }),

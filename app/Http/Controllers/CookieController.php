@@ -1,207 +1,92 @@
 <?php
 
-
-
 namespace App\Http\Controllers;
 
-// ini_set('memory_limit', '256M');
-
 use App\Models\Ingredient;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class CookieController extends Controller
 {
-    public function getIngredients()
+    public function calculateHighestScore()
     {
-        $ingredients = Ingredient::all();
-        return response()->json(['ingredients' => $ingredients]);
+        try {
+            $ingredients = Ingredient::all()->toArray();
+
+            // Find the best distribution of teaspoons
+            $teaspoonsUsed = $this->findBestDistribution($ingredients);
+
+            // Calculate the properties of the resulting cookie
+            $properties = $this->calculateCookieProperties($ingredients, $teaspoonsUsed);
+
+            Log::info('Properties: ' . json_encode($properties));
+
+            // Calculate the total score
+            $highestScore = $this->calculateScore($properties);
+
+            Log::info('Highest Score: ' . $highestScore);
+
+            return response()->json(['highestScore' => $highestScore, 'teaspoonsUsed' => $teaspoonsUsed]);
+        } catch (\Exception $e) {
+            Log::error('Exception: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
-
-    // private function findHighestScore($ingredients, $teaspoons)
-    // {
-    //     // Create a 2D array to store scores for each amount of teaspoons and ingredient
-    //     $scores = array_fill(0, $teaspoons + 1, array_fill_keys(array_column($ingredients, 'id'), 0));
-    
-    //     // Initialize the highest score
-    //     $highestScore = PHP_INT_MIN;
-    
-    //     for ($i = 1; $i <= $teaspoons; $i++) {
-    //         foreach ($ingredients as $ingredient) {
-    //             for ($amount = 0; $amount <= $i; $amount++) {
-    //                 $remainingTeaspoons = $i - $amount;
-    
-    //                 // Calculate the score for the current amount of teaspoons and ingredient
-    //                 $score = $scores[$remainingTeaspoons][$ingredient['id']] + $amount * $ingredient['id'];
-    
-    //                 // Update the highest score
-    //                 $highestScore = max($highestScore, $score);
-    
-    //                 // Store the score for the current amount of teaspoons and ingredient
-    //                 $scores[$i][$ingredient['id']] = max(0, $score);
-    //             }
-    //         }
-    //     }
-    
-    //     return $highestScore;
-    // }
-
-//     private function findHighestScore($ingredients, $teaspoons)
-// {
-//     $memo = [];
-//     $highestScore = PHP_INT_MIN;
-
-//     for ($i = 0; $i <= $teaspoons; $i++) {
-//         foreach ($ingredients as $ingredient) {
-//             for ($amount = 0; $amount <= $i; $amount++) {
-//                 $remainingTeaspoons = $i - $amount;
-
-//                 if (!isset($memo[$remainingTeaspoons])) {
-//                     $memo[$remainingTeaspoons] = $this->calculateScore($ingredients, $remainingTeaspoons);
-//                 }
-
-//                 $score = $memo[$remainingTeaspoons];
-//                 $propertyScores = [
-//                     'capacity' => max(0, $amount * $ingredient['capacity']),
-//                     'durability' => max(0, $amount * $ingredient['durability']),
-//                     'flavor' => max(0, $amount * $ingredient['flavor']),
-//                     'texture' => max(0, $amount * $ingredient['texture']),
-//                 ];
-
-//                 // Multiply the property scores together
-//                 $product = array_product($propertyScores);
-//                 $score *= $product;
-
-//                 $highestScore = max($highestScore, $score);
-//             }
-//         }
-//     }
-
-//     return $highestScore;
-// }
-
-    // private function findHighestScore($ingredients, $teaspoons)
-    // {
-    //     $memo = [];
-    //     $highestScore = PHP_INT_MIN;
-    
-    //     for ($i = 0; $i <= $teaspoons; $i++) {
-    //         foreach ($ingredients as $ingredient) {
-    //             for ($amount = 0; $amount <= $i; $amount++) {
-    //                 $remainingTeaspoons = $i - $amount;
-    
-    //                 if (!isset($memo[$remainingTeaspoons])) {
-    //                     $memo[$remainingTeaspoons] = $this->calculateScore($ingredients, $remainingTeaspoons);
-    //                 }
-    
-    //                 $score = $memo[$remainingTeaspoons];
-    //                 foreach (['capacity', 'durability', 'flavor', 'texture'] as $property) {
-    //                     $score *= max(0, $amount * $ingredient[$property]); // Multiply instead of add
-    //                 }
-    
-    //                 $highestScore = max($highestScore, $score);
-    //             }
-    //         }
-    //     }
-    
-    //     return $highestScore;
-    // }
-
-
-    
-
-    
-
-    private function findHighestScore($ingredients, $teaspoons)
+    private function findBestDistribution($ingredients)
     {
-        $memo = [];
-        $highestScore = PHP_INT_MIN;
-    
-        for ($i = 0; $i <= $teaspoons; $i++) {
-            foreach ($ingredients as $ingredient) {
-                for ($amount = 0; $amount <= $i; $amount++) {
-                    $remainingTeaspoons = $i - $amount;
-    
-                    if (!isset($memo[$remainingTeaspoons])) {
-                        $memo[$remainingTeaspoons] = $this->calculateScore($ingredients, $remainingTeaspoons);
-                    }
-    
-                    $score = $memo[$remainingTeaspoons];
-                    foreach (['capacity', 'durability', 'flavor', 'texture'] as $property) {
-                        $score += max(0, $amount * $ingredient[$property]);
-                    }
-    
-                    $highestScore = max($highestScore, $score);
+        $teaspoonsUsed = [];
+        $remainingTeaspoons = 100;
+
+        // Sort ingredients by their flavor in descending order
+        usort($ingredients, function ($a, $b) {
+            return $b['flavor'] - $a['flavor'];
+        });
+
+        foreach ($ingredients as $ingredient) {
+            $teaspoons = min($remainingTeaspoons, rand(1, 10));
+            $teaspoonsUsed[$ingredient['id']] = $teaspoons;
+            $remainingTeaspoons -= $teaspoons;
+        }
+
+        return $teaspoonsUsed;
+    }
+
+    private function calculateCookieProperties($ingredients, $teaspoonsUsed)
+{
+    $properties = [];
+
+    foreach ($ingredients as $ingredient) {
+        foreach ($ingredient as $property => $value) {
+            if ($property != 'id' && $property != 'name') {
+                if (!isset($properties[$property])) {
+                    $properties[$property] = 0;
+                }
+
+                // Check if the value is numeric before performing multiplication
+                if (is_numeric($value) && is_numeric($teaspoonsUsed[$ingredient['id']])) {
+                    $properties[$property] += $value * $teaspoonsUsed[$ingredient['id']];
+                } else {
+                    // Handle non-numeric values, for example, by setting them to 0
+                    $properties[$property] += 0;
                 }
             }
         }
-    
-        return $highestScore;
     }
 
-//     private function findHighestScore($ingredients, $teaspoons)
-// {
-//     $memo = [];
-//     $highestScore = PHP_INT_MIN; // Initialize the variable here
-
-//     for ($i = 0; $i <= $teaspoons; $i++) {
-//         foreach ($ingredients as $ingredient) {
-//             for ($amount = 0; $amount <= $i; $amount++) {
-//                 $remainingTeaspoons = $i - $amount;
-
-//                 if (!isset($memo[$remainingTeaspoons])) {
-//                     $memo[$remainingTeaspoons] = $this->calculateScore($ingredients, $remainingTeaspoons);
-//                 }
-
-//                 $score = $memo[$remainingTeaspoons];
-//                 $score += $amount * $ingredient['id']; // Adjust this line based on your scoring logic
-
-//                 // Update the highest score
-//                 $highestScore = max($highestScore, $score);
-//             }
-//         }
-//     }
-
-//     return $highestScore;
-// }
-public function calculateHighestScore()
-{
-    try {
-        $ingredients = Ingredient::all()->toArray();
-        Log::info('Ingredients: ' . json_encode($ingredients));
-
-        // Set the desired amount of teaspoons (in this case, 100)
-        $teaspoons = 100;
-
-        // Call the findHighestScore method with the specified ingredients and teaspoons
-        $highestScore = $this->findHighestScore($ingredients, $teaspoons);
-
-        Log::info('Highest Score: ' . $highestScore);
-        return response()->json(['highestScore' => $highestScore]);
-    } catch (\Exception $e) {
-        Log::error('Exception: ' . $e->getMessage());
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
+    return $properties;
 }
 
-private function calculateScore($ingredients, $currentAmounts)
-{
-    $properties = ['capacity', 'durability', 'flavor', 'texture'];
-    $totalScore = 1;
 
-    foreach ($properties as $property) {
-        $propertyScore = 0;
 
-        foreach ($ingredients as $ingredient) {
-            // Ensure $currentAmounts is an associative array and use correct indexing
-            $propertyScore += ($currentAmounts[$ingredient['id']] ?? 0) * ($ingredient[$property] ?? 0);
+    private function calculateScore($properties)
+    {
+        $score = 1;
+
+        foreach ($properties as $value) {
+            $score *= max(0, $value);
         }
 
-        $totalScore *= max(0, $propertyScore);
+        return $score;
     }
-
-    return $totalScore;
-}
 }
