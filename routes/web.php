@@ -13,9 +13,14 @@ use App\Http\Controllers\CookieController;
 |
 */
 
+Route::get('/calculate', function () {
+    return view('calculate');
+});
+
 Route::get('/', function () {
     return view('welcome');
 });
 
 Route::get('/calculate-highest-score', [CookieController::class, 'calculateHighestScore']);
-Route::get('/ingredients', [CookieController::class, 'getIngredients']);
+Route::get('/get-ingredients', [CookieController::class, 'getIngredients']);
+
