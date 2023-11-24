@@ -16891,7 +16891,9 @@ __webpack_require__.r(__webpack_exports__);
         _this.highestScore = response.data.highestScore;
       })["catch"](function (error) {
         console.error('Error fetching highest score:', error);
-        // Optionally, you can update your component state to display the error to the user.
+        // Log the detailed error information
+        console.log('Error details:', error.response.data);
+        console.log('Status code:', error.response.status);
       });
     }
   }
